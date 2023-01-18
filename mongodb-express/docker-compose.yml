@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-dbuser}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-dbpassword}
+      MONGO_INITDB_DATABASE: ${DB_NAME:-mydb}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./config/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express:0.54
+    container_name: mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${DB_USER:-dbuser}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${DB_PASSWORD:-dbpassword}
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_BASICAUTH_USERNAME: ${ADMIN_EMAIL:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 'true'
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  default:
+    name: mongodb-express-network
