@@ -1,0 +1,121 @@
+name: Validate Docker Compose Files
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack:
+          - postgres-pgadmin
+          - mysql-phpmyadmin
+          - mongodb-express
+          - redis-insight
+          - rabbitmq
+          - elk
+          - prometheus-grafana
+          - mailpit
+          - minio
+          - traefik
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Validate ${{ matrix.stack }} configuration
+      run: |
+        cd ${{ matrix.stack }}
+        # Copy example env file for validation
+        if [ -f .env.example ]; then
+          cp .env.example .env
+        fi
+        # Validate docker-compose configuration
+        docker compose config --quiet
+        echo "✅ ${{ matrix.stack }} configuration is valid"
+
+    - name: Test ${{ matrix.stack }} services start
+      run: |
+        cd ${{ matrix.stack }}
+        # Copy example env file
+        if [ -f .env.example ]; then
+          cp .env.example .env
+        fi
+        # Start services
+        docker compose up -d
+        # Wait for services to be ready
+        sleep 30
+        # Check if services are running
+        docker compose ps
+        # Stop services
+        docker compose down
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  readme-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check README files exist
+      run: |
+        stacks=(postgres-pgadmin mysql-phpmyadmin mongodb-express redis-insight rabbitmq elk prometheus-grafana mailpit minio traefik)
+        missing_readmes=()
+
+        for stack in "${stacks[@]}"; do
+          if [ ! -f "$stack/README.md" ]; then
+            missing_readmes+=("$stack")
+          fi
+        done
+
+        if [ ${#missing_readmes[@]} -ne 0 ]; then
+          echo "❌ Missing README files for: ${missing_readmes[*]}"
+          exit 1
+        else
+          echo "✅ All stacks have README files"
+        fi
+
+    - name: Validate main README links
+      run: |
+        # Check if all stacks are mentioned in main README
+        stacks=(postgres-pgadmin mysql-phpmyadmin mongodb-express redis-insight rabbitmq elk prometheus-grafana mailpit minio traefik)
+        missing_links=()
+
+        for stack in "${stacks[@]}"; do
+          if ! grep -q "$stack" README.md; then
+            missing_links+=("$stack")
+          fi
+        done
+
+        if [ ${#missing_links[@]} -ne 0 ]; then
+          echo "❌ Main README missing links for: ${missing_links[*]}"
+          exit 1
+        else
+          echo "✅ Main README contains all stack links"
+        fi
