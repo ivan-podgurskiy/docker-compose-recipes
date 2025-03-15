@@ -1,0 +1,31 @@
+version: 0.1
+log:
+  level: info
+  fields:
+    service: registry
+storage:
+  filesystem:
+    rootdirectory: /storage
+  cache:
+    layerinfo: redis
+  maintenance:
+    uploadpurging:
+      enabled: false
+  delete:
+    enabled: true
+redis:
+  addr: harbor-redis:6379
+  password: ""
+  db: 1
+http:
+  addr: :5000
+  relativeurls: false
+  tls:
+    certificate: /etc/registry/root.crt
+    key: /etc/registry/root.key
+auth:
+  htpasswd:
+    realm: harbor-registry-realm
+    path: /etc/registry/passwd
+validation:
+  disabled: true
