@@ -21,6 +21,7 @@ help:
 	@echo "  Cache/Queue:  redis-insight, rabbitmq"
 	@echo "  Observability: elk, prometheus-grafana"
 	@echo "  Dev Tools:    mailpit, minio, traefik"
+	@echo "  Enterprise:   harbor-registry, vault-secrets"
 
 # Check if stack parameter is provided
 check-stack:
@@ -31,7 +32,7 @@ check-stack:
 	fi
 	@if [ ! -d "$(s)" ]; then \
 		echo "Error: Stack '$(s)' not found."; \
-		echo "Available stacks: postgres-pgadmin mysql-phpmyadmin mongodb-express redis-insight rabbitmq elk prometheus-grafana mailpit minio traefik"; \
+		echo "Available stacks: postgres-pgadmin mysql-phpmyadmin mongodb-express redis-insight rabbitmq elk prometheus-grafana mailpit minio traefik harbor-registry vault-secrets"; \
 		exit 1; \
 	fi
 
@@ -101,12 +102,16 @@ list:
 	@echo "  • mailpit             Local SMTP trap for email testing"
 	@echo "  • minio               S3-compatible local storage"
 	@echo "  • traefik             Reverse proxy with auto-SSL"
+	@echo ""
+	@echo "🏢 Enterprise Infrastructure:"
+	@echo "  • harbor-registry     Container registry with vulnerability scanning"
+	@echo "  • vault-secrets       HashiCorp Vault secrets management"
 
 # Validate all stacks
 validate-all:
 	@echo "Validating all stack configurations..."
 	@failed=0; \
-	for stack in postgres-pgadmin mysql-phpmyadmin mongodb-express redis-insight rabbitmq elk prometheus-grafana mailpit minio traefik; do \
+	for stack in postgres-pgadmin mysql-phpmyadmin mongodb-express redis-insight rabbitmq elk prometheus-grafana mailpit minio traefik harbor-registry vault-secrets; do \
 		echo -n "  $$stack: "; \
 		if cd $$stack && docker compose config --quiet 2>/dev/null; then \
 			echo "✅ Valid"; \

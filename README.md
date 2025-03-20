@@ -39,6 +39,12 @@ A collection of ready-to-use Docker Compose configurations for common developmen
 | [minio](./minio) | S3-compatible local storage | 9000, 9001 | See stack README |
 | [traefik](./traefik) | Reverse proxy with auto-SSL | 80, 443, 8080 | See stack README |
 
+### Enterprise Infrastructure
+| Stack | Description | Ports | Default Credentials |
+|-------|-------------|-------|-------------------|
+| [harbor-registry](./harbor-registry) | Container registry with vulnerability scanning | 5000, 5001 | admin / Harbor12345 |
+| [vault-secrets](./vault-secrets) | HashiCorp Vault secrets management | 8200 | admin / admin123 |
+
 ## Usage
 
 ### Basic Usage
